@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  image          String?
+  provider       String   // 'google' | 'microsoft'
+  providerId     String   // external account id
+  timezone       String   @default("America/Los_Angeles")
+  recapEmail     Boolean  @default(false)
+  recapSlack     Boolean  @default(false)
+  slackUserId    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  summaries      Summary[]
+}
+
+model Summary {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime // normalized to 00:00 local day
+  eventId        String   // provider event id
+  provider       String   // 'google' | 'microsoft'
+  title          String
+  startsAt       DateTime
+  endsAt         DateTime
+  attendees      String   // JSON array of {name,email,required?}
+  location       String?
+  sourceBlob     String   // JSON: raw event fields used for prompt
+  summaryMd      String   // AI output (markdown)
+  actionItems    String   // JSON array of strings
+  confidence     Float?
+  finalized      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, date])
+  @@index([provider, eventId])
+  @@unique([userId, eventId, provider])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+}
