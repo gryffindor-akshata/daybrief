@@ -67,8 +67,8 @@ export async function fetchGoogleCalendarEvents(
 }
 
 function normalizeGoogleEvent(event: GoogleCalendarEvent): NormalizedEvent {
-  // Extract document attachments from description
-  const attachments = extractDocumentLinks(event.description, event.attachments)
+  // Extract document attachments from description (Google Calendar doesn't provide attachments array)
+  const attachments = extractDocumentLinks(event.description)
   
   return {
     id: event.id,

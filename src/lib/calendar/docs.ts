@@ -12,10 +12,28 @@ export interface DocumentAttachment {
   type: 'google_doc' | 'google_sheet' | 'pdf' | 'other'
 }
 
+// Google Docs API response types
+interface GoogleDocsContent {
+  paragraph?: {
+    elements?: Array<{
+      textRun?: {
+        content?: string
+      }
+    }>
+  }
+  table?: {
+    tableRows?: Array<{
+      tableCells?: Array<{
+        content?: GoogleDocsContent[]
+      }>
+    }>
+  }
+}
+
 /**
- * Extract Google Drive document links from meeting description or attachments
+ * Extract Google Drive document links from meeting description
  */
-export function extractDocumentLinks(description?: string, attachments?: any[]): DocumentAttachment[] {
+export function extractDocumentLinks(description?: string): DocumentAttachment[] {
   const links: DocumentAttachment[] = []
   
   if (!description) return links
@@ -126,7 +144,7 @@ export async function fetchGoogleDocContent(
 /**
  * Extract plain text from Google Docs API structure
  */
-function extractTextFromDocStructure(content: any[]): string {
+function extractTextFromDocStructure(content: GoogleDocsContent[]): string {
   let text = ''
   
   for (const element of content) {

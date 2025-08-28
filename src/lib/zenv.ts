@@ -3,6 +3,7 @@ import { z } from 'zod'
 const envSchema = z.object({
   NEXTAUTH_URL: z.string().url().optional().default('http://localhost:3000'),
   NEXTAUTH_SECRET: z.string().min(1).optional().default('development-secret-change-in-production'),
+  AUTH_TRUST_HOST: z.string().optional().default('true'),
   DATABASE_URL: z.string().min(1).optional().default('file:./dev.db'),
   OPENAI_API_BASE: z.string().url().optional().default('https://api.openai.com/v1'),
   OPENAI_API_KEY: z.string().min(1).optional().default('sk-development-key'),
