@@ -4,6 +4,7 @@ import { generateSummary } from '@/lib/llm'
 import { buildSummaryPrompt } from '@/lib/prompt'
 import { PrismaClient } from '@prisma/client'
 import { NormalizedEvent } from '@/lib/calendar/types'
+import { fetchGoogleDocContent } from '@/lib/calendar/docs'
 import { z } from 'zod'
 
 const prisma = new PrismaClient()
@@ -27,6 +28,13 @@ const summarizeRequestSchema = z.object({
       email: z.string().optional(),
     }).optional(),
     htmlLink: z.string().optional(),
+    attachments: z.array(z.object({
+      id: z.string(),
+      title: z.string(),
+      url: z.string(),
+      type: z.enum(['google_doc', 'google_sheet', 'pdf', 'other']),
+      content: z.string().optional(),
+    })).optional(),
   }),
   regenerate: z.boolean().default(false),
 })
@@ -68,6 +76,25 @@ export async function POST(request: NextRequest) {
         actionItems: JSON.parse(existingSummary.actionItems),
         confidence: existingSummary.confidence,
       })
+    }
+
+    // Fetch document content if there are Google Doc attachments
+    if (event.attachments && event.attachments.length > 0) {
+      const accessToken = session.accessToken
+      if (accessToken) {
+        for (const attachment of event.attachments) {
+          if (attachment.type === 'google_doc' && !attachment.content) {
+            try {
+              const docContent = await fetchGoogleDocContent(accessToken, attachment.id)
+              if (docContent) {
+                attachment.content = docContent.content
+              }
+            } catch (error) {
+              console.error(`Failed to fetch document ${attachment.id}:`, error)
+            }
+          }
+        }
+      }
     }
 
     // Generate new summary

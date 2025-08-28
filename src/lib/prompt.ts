@@ -26,6 +26,14 @@ export function buildSummaryPrompt(event: NormalizedEvent, timezone: string): st
   const description = event.description 
     ? truncateText(event.description, 1500)
     : 'No description provided'
+  
+  // Include document content if available
+  const documentContent = event.attachments && event.attachments.length > 0
+    ? event.attachments
+        .filter(att => att.content && att.content.trim().length > 0)
+        .map(att => `\n--- ${att.title} ---\n${truncateText(att.content!, 3000)}`)
+        .join('\n')
+    : ''
 
   return `Context:
 - Title: ${event.title}
@@ -34,11 +42,13 @@ export function buildSummaryPrompt(event: NormalizedEvent, timezone: string): st
 - Attendees (${attendeeCount}): ${topAttendees}${moreAttendees}
 - Location/Link: ${event.location || event.htmlLink || 'Not specified'}
 - Description/Agenda:
-${description}
+${description}${documentContent ? `
+
+Document Content:${documentContent}` : ''}
 
 Tasks:
-1) Produce a crisp summary in 4–7 bullets focused on purpose, decisions, and outcomes.
-2) Extract explicit action items as a JSON array of strings: ["Owner: Task — Due (if any)", ...]. If none, return [].
+1) Produce a crisp summary in 4–7 bullets focused on purpose, decisions, and outcomes${documentContent ? '. Include insights from attached documents.' : ''}.
+2) Extract explicit action items as a JSON array of strings: ["Owner: Task — Due (if any)", ...]. Include action items from both meeting context and attached documents. If none, return [].
 3) Provide a confidence score [0.0–1.0] based on clarity/amount of context.
 
 Output JSON strictly as:
