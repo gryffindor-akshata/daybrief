@@ -1,4 +1,5 @@
 import { NormalizedEvent } from './types'
+import { extractDocumentLinks } from './docs'
 
 export interface GoogleCalendarEvent {
   id: string
@@ -66,6 +67,9 @@ export async function fetchGoogleCalendarEvents(
 }
 
 function normalizeGoogleEvent(event: GoogleCalendarEvent): NormalizedEvent {
+  // Extract document attachments from description
+  const attachments = extractDocumentLinks(event.description, event.attachments)
+  
   return {
     id: event.id,
     provider: 'google',
@@ -84,6 +88,7 @@ function normalizeGoogleEvent(event: GoogleCalendarEvent): NormalizedEvent {
     } : undefined,
     location: event.location,
     htmlLink: event.htmlLink,
+    attachments: attachments.length > 0 ? attachments : undefined,
   }
 }
 

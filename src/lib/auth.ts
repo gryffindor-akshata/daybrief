@@ -14,13 +14,17 @@ const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
-          scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+          scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/documents.readonly https://www.googleapis.com/auth/drive.readonly',
           access_type: 'offline',
           prompt: 'consent',
+          response_type: 'code',
         },
       },
     }),
   ],
+  experimental: {
+    enableWebAuthn: false,
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
       if (!account || !user.email) return false
@@ -111,6 +115,18 @@ const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 })
 
