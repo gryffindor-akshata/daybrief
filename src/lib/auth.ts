@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 
 const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  debug: process.env.NODE_ENV === 'development',
+  debug: true,
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
@@ -20,29 +20,6 @@ const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
     }),
-    {
-      id: 'microsoft',
-      name: 'Microsoft',
-      type: 'oauth',
-      clientId: env.MS_CLIENT_ID,
-      clientSecret: env.MS_CLIENT_SECRET,
-      authorization: {
-        url: `https://login.microsoftonline.com/${env.MS_TENANT_ID}/oauth2/v2.0/authorize`,
-        params: {
-          scope: 'openid email profile offline_access Calendars.Read',
-        },
-      },
-      token: `https://login.microsoftonline.com/${env.MS_TENANT_ID}/oauth2/v2.0/token`,
-      userinfo: 'https://graph.microsoft.com/oidc/userinfo',
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: null,
-        }
-      },
-    }
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
