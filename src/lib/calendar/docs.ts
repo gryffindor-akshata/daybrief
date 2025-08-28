@@ -41,9 +41,12 @@ export function extractDocumentLinks(
   
   // First, process calendar attachments (more reliable than parsing URLs)
   if (calendarAttachments) {
+    console.log('Processing calendar attachments:', calendarAttachments.length)
     for (const attachment of calendarAttachments) {
+      console.log(`Attachment: ${attachment.title}, mimeType: ${attachment.mimeType}, fileId: ${attachment.fileId}`)
       // Check if it's a Google Doc/Sheet/Drive file
       if (attachment.mimeType === 'application/vnd.google-apps.document') {
+        console.log(`Found Google Doc: ${attachment.title}`)
         links.push({
           id: attachment.fileId,
           title: attachment.title,

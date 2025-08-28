@@ -80,21 +80,49 @@ export async function POST(request: NextRequest) {
 
     // Fetch document content if there are Google Doc attachments
     if (event.attachments && event.attachments.length > 0) {
+      console.log('Found attachments:', event.attachments.length)
       const accessToken = session.accessToken
+      console.log('Access token available:', !!accessToken)
+      
+      // Check token scopes by making a test Drive API call
+      if (accessToken) {
+        try {
+          const testResponse = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          })
+          console.log('Drive API test response status:', testResponse.status)
+          if (!testResponse.ok) {
+            const errorText = await testResponse.text()
+            console.log('Drive API test error:', errorText)
+          }
+        } catch (error) {
+          console.log('Drive API test failed:', error)
+        }
+      }
+      
       if (accessToken) {
         for (const attachment of event.attachments) {
+          console.log(`Processing attachment: ${attachment.type}, ID: ${attachment.id}`)
           if (attachment.type === 'google_doc' && !attachment.content) {
             try {
+              console.log(`Fetching Google Doc content for: ${attachment.id}`)
               const docContent = await fetchGoogleDocContent(accessToken, attachment.id)
               if (docContent) {
+                console.log(`Fetched document content: ${docContent.content.length} characters`)
                 attachment.content = docContent.content
+              } else {
+                console.log(`No content returned for document: ${attachment.id}`)
               }
             } catch (error) {
               console.error(`Failed to fetch document ${attachment.id}:`, error)
             }
           }
         }
+      } else {
+        console.log('No access token available for document fetching')
       }
+    } else {
+      console.log('No attachments found for this event')
     }
 
     // Generate new summary
