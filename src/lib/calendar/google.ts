@@ -27,6 +27,13 @@ export interface GoogleCalendarEvent {
   }
   location?: string
   htmlLink?: string
+  attachments?: {
+    fileId: string
+    title: string
+    mimeType: string
+    iconLink?: string
+    fileUrl: string
+  }[]
 }
 
 export async function fetchGoogleCalendarEvents(
@@ -43,6 +50,7 @@ export async function fetchGoogleCalendarEvents(
     singleEvents: 'true',
     orderBy: 'startTime',
     maxResults: '50',
+    fields: 'items(id,summary,description,start,end,attendees,organizer,location,htmlLink,attachments)',
   })
 
   const response = await fetch(
@@ -67,8 +75,8 @@ export async function fetchGoogleCalendarEvents(
 }
 
 function normalizeGoogleEvent(event: GoogleCalendarEvent): NormalizedEvent {
-  // Extract document attachments from description (Google Calendar doesn't provide attachments array)
-  const attachments = extractDocumentLinks(event.description)
+  // Extract document attachments from both calendar attachments and description
+  const attachments = extractDocumentLinks(event.description, event.attachments)
   
   return {
     id: event.id,

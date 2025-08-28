@@ -31,11 +31,44 @@ interface GoogleDocsContent {
 }
 
 /**
- * Extract Google Drive document links from meeting description
+ * Extract Google Drive document links from meeting description and attachments
  */
-export function extractDocumentLinks(description?: string): DocumentAttachment[] {
+export function extractDocumentLinks(
+  description?: string, 
+  calendarAttachments?: { fileId: string; title: string; mimeType: string; fileUrl: string }[]
+): DocumentAttachment[] {
   const links: DocumentAttachment[] = []
   
+  // First, process calendar attachments (more reliable than parsing URLs)
+  if (calendarAttachments) {
+    for (const attachment of calendarAttachments) {
+      // Check if it's a Google Doc/Sheet/Drive file
+      if (attachment.mimeType === 'application/vnd.google-apps.document') {
+        links.push({
+          id: attachment.fileId,
+          title: attachment.title,
+          url: attachment.fileUrl,
+          type: 'google_doc',
+        })
+      } else if (attachment.mimeType === 'application/vnd.google-apps.spreadsheet') {
+        links.push({
+          id: attachment.fileId,
+          title: attachment.title,
+          url: attachment.fileUrl,
+          type: 'google_sheet',
+        })
+      } else if (attachment.fileUrl.includes('drive.google.com')) {
+        links.push({
+          id: attachment.fileId,
+          title: attachment.title,
+          url: attachment.fileUrl,
+          type: 'other',
+        })
+      }
+    }
+  }
+  
+  // Then, also check description for any additional links
   if (!description) return links
 
   // Regex patterns for Google Drive links
