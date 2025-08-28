@@ -1,11 +1,13 @@
-import NextAuth, { NextAuthOptions } from 'next-auth'
+import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import { PrismaClient } from '@prisma/client'
 import { env } from './zenv'
 
 const prisma = new PrismaClient()
 
-export const authOptions: NextAuthOptions = {
+const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
+  debug: true,
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
@@ -110,10 +112,9 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-}
+})
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+export { handlers, auth, signIn, signOut }
 
 export async function getUserByEmail(email: string) {
   return prisma.user.findUnique({
